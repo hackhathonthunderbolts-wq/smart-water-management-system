@@ -1,35 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { createRoot } from 'react-dom/client'
 import { Activity, Bell, ChevronLeft, ChevronRight, CircleUserRound, CloudRain, Droplets, FlaskConical, History, LayoutDashboard, Settings, ShieldAlert, Waves, X } from 'lucide-react'
+import { createRoot } from 'react-dom/client'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import './index.css'
 
-const hours = Array.from({ length: 24 }, (_, i) => ({
-  label: `${String(i).padStart(2, '0')}:00`,
-  usage: Math.max(4, Math.round(18 + Math.sin(i / 2.4) * 6 + Math.random() * 6)),
-}))
-
-const days = [
-  { label: 'Mon', usage: 410 }, { label: 'Tue', usage: 380 }, { label: 'Wed', usage: 450 },
-  { label: 'Thu', usage: 330 }, { label: 'Fri', usage: 390 }, { label: 'Sat', usage: 300 }, { label: 'Sun', usage: 360 },
-]
+const hours = Array.from({ length: 24 }, (_, i) => ({ label: `${String(i).padStart(2, '0')}:00`, usage: Math.max(4, Math.round(18 + Math.sin(i / 2.4) * 6 + Math.random() * 6)) }))
+const days = [{ label: 'Mon', usage: 410 }, { label: 'Tue', usage: 380 }, { label: 'Wed', usage: 450 }, { label: 'Thu', usage: 330 }, { label: 'Fri', usage: 390 }, { label: 'Sat', usage: 300 }, { label: 'Sun', usage: 360 }]
 
 function App() {
-  const [page, setPage] = useState('Dashboard')
-  const [collapsed, setCollapsed] = useState(false)
-  const [valveOn, setValveOn] = useState(true)
-  const [tank, setTank] = useState(67)
-  const [usage, setUsage] = useState(384)
-  const [quality, setQuality] = useState(92)
-  const [history, setHistory] = useState(hours)
-  const [range, setRange] = useState('24h')
-  const [dark, setDark] = useState(false)
-  const [notifications, setNotifications] = useState(true)
-  const [threshold, setThreshold] = useState(20)
-  const [rainTank, setRainTank] = useState(74)
-  const [rainCollected, setRainCollected] = useState(129)
-  const [source, setSource] = useState('municipal')
-  const [autoRain, setAutoRain] = useState(true)
+  const [page, setPage] = useState('Dashboard'), [collapsed, setCollapsed] = useState(false), [valveOn, setValveOn] = useState(true)
+  const [tank, setTank] = useState(67), [usage, setUsage] = useState(384), [quality, setQuality] = useState(92), [history, setHistory] = useState(hours), [range, setRange] = useState('24h')
+  const [dark, setDark] = useState(false), [notifications, setNotifications] = useState(true), [threshold, setThreshold] = useState(20)
+  const [rainTank, setRainTank] = useState(74), [rainCollected, setRainCollected] = useState(129), [source, setSource] = useState('municipal'), [autoRain, setAutoRain] = useState(true)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -43,115 +25,21 @@ function App() {
     return () => clearInterval(timer)
   }, [valveOn])
 
-  const flow = valveOn ? 14.6 : 0
-  const lowTank = tank < threshold
-  const chartData = useMemo(() => range === '24h' ? history : days, [range, history])
-  const nav = [
-    ['Dashboard', LayoutDashboard], ['History', History], ['Rainwater', CloudRain], ['Alerts', ShieldAlert], ['Settings', Settings]
-  ]
+  const flow = valveOn ? 14.6 : 0, lowTank = tank < threshold), chartData = useMemo(() => range === '24h' ? history : days, [range, history])
+  const nav = [['Dashboard', LayoutDashboard], ['History', History], ['Rainwater', CloudRain], ['Alerts', ShieldAlert], ['Settings', Settings]]
 
-  return (
-    <div className={`min-h-screen font-nunito app ${dark ? 'dark-mode' : ''}`}>
-      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
-        <div className="brand">
-          <div className="brand-mark"><Waves size={22} /></div>
-          {!collapsed && <div><div className="brand-name">AquaPulse</div><div className="brand-sub">SMART WATER</div></div>}
-        </div>
-        <button className="collapse-btn" onClick={() => setCollapsed(v => !v)} aria-label="Toggle sidebar">
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-        <nav>
-          {nav.map(([name, Icon]) => (
-            <button key={name} className={`nav-item ${page === name ? 'active' : ''}`} onClick={() => setPage(name)}>
-              <Icon size={19} />
-              {!collapsed && <span>{name}</span>}
-              {name === 'Alerts' && !collapsed && <span className="nav-badge">{lowTank ? 1 : 0}</span>}
-            </button>
-          ))}
-        </nav>
-        {!collapsed && <div className="sidebar-foot"><div className="online-dot" /><div><strong>System online</strong><span>All sensors synced</span></div></div>}
-      </aside>
-
-      <main className={`main ${collapsed ? 'expanded' : ''}`}>
-        <header className="topbar">
-          <div><div className="eyebrow">SMART WATER MANAGEMENT</div><h1>{page === 'Dashboard' ? 'Good evening, there.' : page}</h1></div>
-          <div className="top-actions">
-            <button className="icon-btn" onClick={() => setDark(v => !v)} aria-label="Toggle theme">{dark ? '☀' : '☾'}</button>
-            <button className="icon-btn notification" onClick={() => setNotifications(v => !v)} aria-label="Toggle notifications"><Bell size={19} />{notifications && <i />}</button>
-            <div className="profile"><CircleUserRound size={33} /><div><strong>Water Admin</strong><span>Smart control center</span></div></div>
-          </div>
-        </header>
-
-        {page === 'Dashboard' && <Dashboard {...{ flow, valveOn, setValveOn, tank, usage, quality, lowTank, notifications, setNotifications, chartData, range, setRange }} />}
-        {page === 'History' && <HistoryPage data={chartData} />}
-        {page === 'Rainwater' && <RainwaterPage {...{ rainTank, rainCollected, source, setSource, autoRain, setAutoRain }} />}
-        {page === 'Alerts' && <AlertsPage tank={tank} threshold={threshold} lowTank={lowTank} />}
-        {page === 'Settings' && <SettingsPage {...{ dark, setDark, notifications, setNotifications, threshold, setThreshold, autoRain, setAutoRain }} />}
-      </main>
-    </div>
-  )
+  return <div className={`min-h-screen font-nunito app ${dark ? 'dark-mode' : ''}`}><aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}><div className="brand"><div className="brand-mark"><Waves size={22} /></div>{!collapsed && <div><div className="brand-name">AquaPulse</div><div className="brand-sub">SMART WATER</div></div>}</div><button className="collapse-btn" onClick={() => setCollapsed(v => !v)}>{collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}</button><nav>{nav.map(([name, Icon]) => <button key={name} className={`nav-item ${page === name ? 'active' : ''}`} onClick={() => setPage(name)}><Icon size={19} />{!collapsed && <span>{name}</span>}{name === 'Alerts' && !collapsed && <span className="nav-badge">{lowTank ? 1 : 0}</span>}</button>)}</nav>{!collapsed && <div className="sidebar-foot"><div className="online-dot" /><div><strong>System online</strong><span>All sensors synced</span></div></div>}</aside>
+    <main className={`main ${collapsed ? 'expanded' : ''}`}><header className="topbar"><div><div className="eyebrow">SMART WATER MANAGEMENT</div><h1>{page === 'Dashboard' ? 'Good evening, there.' : page}</h1></div><div className="top-actions"><button className="icon-btn" onClick={() => setDark(v => !v)}>{dark ? '☀' : '☾'}</button><button className="icon-btn notification" onClick={() => setNotifications(v => !v)}><Bell size={19} />{notifications && <i />}</button><div className="profile"><CircleUserRound size={33} /><div><strong>Water Admin</strong><span>Smart control center</span></div></div></div></header>
+      {page === 'Dashboard' && <Dashboard {...{ flow, valveOn, setValveOn, tank, usage, quality, lowTank, notifications, setNotifications, chartData, range, setRange }} />}
+      {page === 'History' && <HistoryPage data={chartData} />}{page === 'Rainwater' && <RainwaterPage {...{ rainTank, rainCollected, source, setSource, autoRain, setAutoRain }} />}{page === 'Alerts' && <AlertsPage tank={tank} threshold={threshold} lowTank={lowTank} />}{page === 'Settings' && <SettingsPage {...{ dark, setDark, notifications, setNotifications, threshold, setThreshold, autoRain, setAutoRain }} />}</main></div>
 }
 
-function Dashboard({ flow, valveOn, setValveOn, tank, usage, quality, lowTank, notifications, setNotifications, chartData, range, setRange }) {
-  return (
-    <>
-      {lowTank && notifications && <div className="alert-banner"><div className="alert-icon"><ShieldAlert size={18} /></div><div><strong>Tank level is running low</strong><span>Tank is below your configured threshold.</span></div><button onClick={() => setNotifications(false)}><X size={17} /></button></div>}
-
-      <section className="hero-card">
-        <div className="hero-copy">
-          <div className="pill live"><span /> LIVE SMART SYSTEM</div>
-          <div className="flow-value">{flow.toFixed(1)}<small>L/min</small></div>
-          <div className="hero-label">CURRENT FLOW RATE</div>
-          <p>Real-time water supply monitoring with remote valve control.</p>
-          <div className="source-chip"><span className="mun-dot" /> Smart water supply</div>
-        </div>
-        <div className="tank-visual">
-          <div className="tank-shell"><div className="water-fill" style={{ height: `${tank}%` }} /><div className="tank-wave" /><div className="tank-number">{Math.round(tank)}<small>%</small></div></div>
-          <div className="tank-meta"><strong>Tank level</strong><span>Current available level</span></div>
-        </div>
-        <div className="valve-panel">
-          <div className="eyebrow">REMOTE VALVE</div>
-          <button className={`valve ${valveOn ? 'on' : 'off'}`} onClick={() => setValveOn(v => !v)}><span className="valve-knob" /></button>
-          <div className="valve-state">{valveOn ? 'SUPPLY ON' : 'SUPPLY OFF'}</div>
-          <div className="valve-hint">{valveOn ? 'Tap to stop water flow' : 'Tap to resume supply'}</div>
-        </div>
-      </section>
-
-      <div className="dashboard-heading"><div><div className="eyebrow">SMART WATER SYSTEM</div><h2>Water supply overview</h2><p>Essential monitoring and control information.</p></div></div>
-
-      <section className="metric-grid smart-metrics">
-        <Metric icon={Droplets} label="Today's usage" value={`${Math.round(usage)} L`} note="Running consumption counter" />
-        <Metric icon={Activity} label="Current flow" value={`${flow.toFixed(1)} L/min`} note="Live supply rate" />
-        <Metric icon={FlaskConical} label="Water quality" value={`${Math.round(quality)}/100`} note="Current quality index" />
-        <Metric icon={ShieldAlert} label="Tank level" value={`${Math.round(tank)}%`} note="Current available level" />
-      </section>
-
-      <section className="chart-card">
-        <div className="chart-header"><div><div className="eyebrow">CONSUMPTION LOG</div><h2>Usage history</h2><p>Track water consumption over 24 hours or 7 days.</p></div><div className="range-tabs"><button className={range === '24h' ? 'active' : ''} onClick={() => setRange('24h')}>24 hours</button><button className={range === '7d' ? 'active' : ''} onClick={() => setRange('7d')}>7 days</button></div></div>
-        <div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><defs><linearGradient id="usageFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0077b6" stopOpacity=".22" /><stop offset="100%" stopColor="#0077b6" stopOpacity="0" /></linearGradient></defs><CartesianGrid vertical={false} stroke="#a9c9ca" strokeOpacity=".25" /><XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><Tooltip /><Area type="monotone" dataKey="usage" stroke="#0077b6" strokeWidth={3} fill="url(#usageFill)" /></AreaChart></ResponsiveContainer></div>
-      </section>
-    </>
-  )
-}
-
-function Metric({ icon: Icon, label, value, note }) {
-  return <div className="metric-card"><div className="metric-head"><span className="metric-icon"><Icon size={17} /></span><span>{label}</span></div><strong>{value}</strong><small>{note}</small></div>
-}
-
-function HistoryPage({ data }) {
-  return <section className="module-section"><div className="module-title"><div><div className="eyebrow">ANALYTICS CENTER</div><h2>Water usage history</h2><p>Review your recent consumption trend.</p></div></div><div className="chart-card"><div className="chart-wrap tall"><ResponsiveContainer><LineChart data={data}><CartesianGrid vertical={false} stroke="#a9c9ca" strokeOpacity=".25" /><XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><Tooltip /><Line type="monotone" dataKey="usage" stroke="#0077b6" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></div></div></section>
-}
-
-function RainwaterPage({ rainTank, rainCollected, source, setSource, autoRain, setAutoRain }) {
-  const stored = Math.round(rainTank * 7.5)
-  const space = Math.round((100 - rainTank) * 7.5)
-  return <section className="module-section"><div className="module-title"><div><div className="eyebrow">RAINWATER CENTER</div><h2>Rainwater harvesting</h2><p>Collection, storage and reuse in one simple view.</p></div></div><div className="rain-grid"><div className="big-rain-card"><div className="eyebrow">STORAGE TANK</div><div className="rain-big"><b>{Math.round(rainTank)}%</b><span>capacity</span></div><div className="capacity-bar"><span style={{ width: `${rainTank}%` }} /></div><div className="rain-details"><span>Stored <b>{stored} L</b></span><span>Available space <b>{space} L</b></span></div></div><Metric icon={CloudRain} label="Collected today" value={`${Math.round(rainCollected)} L`} note="Live collection counter" /><Metric icon={Droplets} label="Available storage" value={`${space} L`} note="Free rainwater capacity" /></div><div className="rain-feature-grid"><Feature icon={Activity} title="Catchment efficiency" value="86%" text="Roof runoff is being captured efficiently." /><Feature icon={CloudRain} title="Rainwater stored" value={`${stored} L`} text="Estimated water currently available." /><Feature icon={Droplets} title="Reuse status" value="READY" text="Stored rainwater can be routed to supply." /></div><div className="source-card"><div><div className="eyebrow">WATER SOURCE</div><h2>Supply routing</h2><p>Choose the source used for household water supply.</p></div><div className="source-controls"><div className="segmented"><button className={source === 'municipal' ? 'selected' : ''} onClick={() => setSource('municipal')}>Municipal</button><button className={source === 'rainwater' ? 'selected' : ''} onClick={() => setSource('rainwater')}>Rainwater</button></div><label className="check-row"><input type="checkbox" checked={autoRain} onChange={e => setAutoRain(e.target.checked)} /><span className="fake-check">✓</span><span><b>Auto-prioritize rainwater</b><small>Use stored rainwater when available</small></span></label></div></div></section>
-}
-
+function Dashboard({ flow, valveOn, setValveOn, tank, usage, quality, lowTank, notifications, setNotifications, chartData, range, setRange }) { return <>{lowTank && notifications && <div className="alert-banner"><div className="alert-icon"><ShieldAlert size={18} /></div><div><strong>Tank level is running low</strong><span>Tank is below your configured threshold.</span></div><button onClick={() => setNotifications(false)}><X size={17} /></button></div>}<section className="hero-card"><div className="hero-copy"><div className="pill live"><span /> LIVE SMART SYSTEM</div><div className="flow-value">{flow.toFixed(1)}<small>L/min</small></div><div className="hero-label">CURRENT FLOW RATE</div><p>Real-time water supply monitoring with remote valve control.</p><div className="source-chip"><span className="mun-dot" /> Smart water supply</div></div><div className="tank-visual"><div className="tank-shell"><div className="water-fill" style={{ height: `${tank}%` }} /><div className="tank-wave" /><div className="tank-number">{Math.round(tank)}<small>%</small></div></div><div className="tank-meta"><strong>Tank level</strong><span>Current available level</span></div></div><div className="valve-panel"><div className="eyebrow">REMOTE VALVE</div><button className={`valve ${valveOn ? 'on' : 'off'}`} onClick={() => setValveOn(v => !v)}><span className="valve-knob" /></button><div className="valve-state">{valveOn ? 'SUPPLY ON' : 'SUPPLY OFF'}</div><div className="valve-hint">{valveOn ? 'Tap to stop water flow' : 'Tap to resume supply'}</div></div></section><div className="dashboard-heading"><div><div className="eyebrow">SMART WATER SYSTEM</div><h2>Water supply overview</h2><p>Essential monitoring and control information.</p></div></div><section className="metric-grid smart-metrics"><Metric icon={Droplets} label="Today's usage" value={`${Math.round(usage)} L`} note="Running consumption counter" /><Metric icon={Activity} label="Current flow" value={`${flow.toFixed(1)} L/min`} note="Live supply rate" /><Metric icon={FlaskConical} label="Water quality" value={`${Math.round(quality)}/100`} note="Current quality index" /><Metric icon={ShieldAlert} label="Tank level" value={`${Math.round(tank)}%`} note="Current available level" /></section><section className="chart-card"><div className="chart-header"><div><div className="eyebrow">CONSUMPTION LOG</div><h2>Usage history</h2><p>Track water consumption over 24 hours or 7 days.</p></div><div className="range-tabs"><button className={range === '24h' ? 'active' : ''} onClick={() => setRange('24h')}>24 hours</button><button className={range === '7d' ? 'active' : ''} onClick={() => setRange('7d')}>7 days</button></div></div><div className="chart-wrap"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chartData}><defs><linearGradient id="usageFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0077b6" stopOpacity=".22" /><stop offset="100%" stopColor="#0077b6" stopOpacity="0" /></linearGradient></defs><CartesianGrid vertical={false} stroke="#a9c9ca" strokeOpacity=".25" /><XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><Tooltip /><Area type="monotone" dataKey="usage" stroke="#0077b6" strokeWidth={3} fill="url(#usageFill)" /></AreaChart></ResponsiveContainer></div></section></> }
+function Metric({ icon: Icon, label, value, note }) { return <div className="metric-card"><div className="metric-head"><span className="metric-icon"><Icon size={17} /></span><span>{label}</span></div><strong>{value}</strong><small>{note}</small></div> }
+function HistoryPage({ data }) { return <section className="module-section"><div className="module-title"><div><div className="eyebrow">ANALYTICS CENTER</div><h2>Water usage history</h2><p>Review your recent consumption trend.</p></div></div><div className="chart-card"><div className="chart-wrap tall"><ResponsiveContainer><LineChart data={data}><CartesianGrid vertical={false} stroke="#a9c9ca" strokeOpacity=".25" /><XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} /><Tooltip /><Line type="monotone" dataKey="usage" stroke="#0077b6" strokeWidth={3} dot={false} /></LineChart></ResponsiveContainer></div></div></section> }
+function RainwaterPage({ rainTank, rainCollected, source, setSource, autoRain, setAutoRain }) { const stored = Math.round(rainTank * 7.5), space = Math.round((100 - rainTank) * 7.5); return <section className="module-section rainwater-page"><div className="module-title"><div><div className="eyebrow">RAINWATER CENTER</div><h2>Rainwater harvesting</h2><p>Collection, storage and reuse in one simple view.</p></div></div><div className="rain-grid"><div className="big-rain-card"><div className="eyebrow">STORAGE TANK</div><div className="rain-big"><b>{Math.round(rainTank)}%</b><span>capacity</span></div><div className="capacity-bar"><span style={{ width: `${rainTank}%` }} /></div><div className="rain-details"><span>Stored <b>{stored} L</b></span><span>Available space <b>{space} L</b></span></div></div><Metric icon={CloudRain} label="Collected today" value={`${Math.round(rainCollected)} L`} note="Rainwater collected today" /><Metric icon={Droplets} label="Available storage" value={`${space} L`} note="Free storage capacity" /></div><div className="rain-feature-grid"><Feature icon={Activity} title="Catchment efficiency" value="86%" text="Roof runoff is being captured efficiently." /><Feature icon={CloudRain} title="Rainwater stored" value={`${stored} L`} text="Water currently available for reuse." /><Feature icon={Droplets} title="Supply readiness" value="READY" text="Stored rainwater is ready to be routed to supply." /></div><div className="source-card"><div><div className="eyebrow">WATER SOURCE</div><h2>Supply routing</h2><p>Choose the source used for household water supply.</p></div><div className="source-controls"><div className="segmented"><button className={source === 'municipal' ? 'selected' : ''} onClick={() => setSource('municipal')}>Municipal</button><button className={source === 'rainwater' ? 'selected' : ''} onClick={() => setSource('rainwater')}>Rainwater</button></div><label className="check-row"><input type="checkbox" checked={autoRain} onChange={e => setAutoRain(e.target.checked)} /><span className="fake-check">✓</span><span><b>Auto-prioritize rainwater</b><small>Use stored rainwater when available</small></span></label></div></div></section> }
 function Feature({ icon: Icon, title, value, text }) { return <div className="feature-card"><span className="feature-icon"><Icon size={18} /></span><div><div className="feature-label">{title}</div><strong>{value}</strong><p>{text}</p></div></div> }
-
 function AlertsPage({ tank, threshold, lowTank }) { return <section className="module-section"><div className="module-title"><div><div className="eyebrow">SYSTEM MONITOR</div><h2>Alerts</h2><p>Only important tank-level warnings.</p></div><div className="alert-count">{lowTank ? 1 : 0} active</div></div><div className="alert-list"><div className={`alert-row ${lowTank ? 'active-alert' : ''}`}><div className="alert-row-icon"><Droplets size={19} /></div><div><b>Tank level</b><p>{Math.round(tank)}% current level · alert below {threshold}%.</p></div><span className={lowTank ? 'warning-state' : 'ok-state'}>{lowTank ? 'ACTION NEEDED' : 'NORMAL'}</span></div></div></section> }
-
 function SettingsPage({ dark, setDark, notifications, setNotifications, threshold, setThreshold, autoRain, setAutoRain }) { return <section className="module-section"><div className="module-title"><div><div className="eyebrow">CONTROL CENTER</div><h2>System settings</h2><p>Configure essential monitoring options.</p></div></div><div className="settings-grid"><div className="setting-card"><div><b>Appearance</b><p>Switch between light and dark themes.</p></div><button className="setting-toggle" onClick={() => setDark(v => !v)}>{dark ? '☀ Light mode' : '☾ Dark mode'}</button></div><div className="setting-card"><div><b>Notifications</b><p>Show low tank warning banners.</p></div><button className={`setting-toggle ${notifications ? 'on' : ''}`} onClick={() => setNotifications(v => !v)}>{notifications ? 'Enabled' : 'Disabled'}</button></div><div className="setting-card"><div><b>Auto-prioritize rainwater</b><p>Prefer stored rainwater when available.</p></div><button className={`setting-toggle ${autoRain ? 'on' : ''}`} onClick={() => setAutoRain(v => !v)}>{autoRain ? 'Enabled' : 'Disabled'}</button></div><div className="setting-card"><div><b>Low tank threshold</b><p>Show an alert below this level.</p></div><input type="range" min="5" max="50" value={threshold} onChange={e => setThreshold(Number(e.target.value))} /><strong>{threshold}%</strong></div></div></section> }
 
 createRoot(document.getElementById('root')).render(<App />)
